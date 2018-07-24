@@ -25,7 +25,7 @@ check_disk_img() {
   fi
   if [ ! -f $1 ]
   then
-    qemu-img create -f qcow2 $1 10G
+    qemu-img create -f qcow2 $1 15G
     if [ $? == 0 ]
     then
       return 0
@@ -45,10 +45,9 @@ install_vm() {
   NO_AT_BRIDGE=1  virt-install \
       --name $1\
       --memory 10240 \
-      --disk $2,size=10 \
+      --disk $2,size=15 \
       --vcpus 8 \
-      --os-type kvm\
-      --os-variant generic \
+      --virt-type kvm\
       --network bridge=virbr0 \
       --vnc \
       --cdrom /tmp/ubuntu-17.10.1-server-amd64.iso
@@ -73,6 +72,7 @@ _get_vnc_url() {
   url=`echo "$1" | awk -F'-' '{for(i=1;i<NF;i++) print $i}'| awk '/vnc/{print $2}'`
   echo $url
 }
+
 # using vncviewr (from tigervnc) for connecting vm
 connect_vm() {
     local LIBVIRT_STRS=`ps aux|grep libvirt`
@@ -92,8 +92,8 @@ connect_vm() {
 #
 # main entrance
 ## Bug. if DISK stores in /home/david, will have permission issue
-DISK="/tmp/vm-disk.qcow2"
-VMNAME="OpenStackVM"
+DISK="/tmp/vm-disk-2.qcow2"
+VMNAME="OpenStackVM2"
 
 check_disk_img $DISK
 install_vm  $VMNAME $DISK
