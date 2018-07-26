@@ -63,6 +63,74 @@ of XML to the config file:
   </interface>
 ```
 N.B. the MAC address is optional and will be automatically generated if omitted.
+### Network status
+```code
+
+david@openstack-vm-u9832:~$ ifconfig
+ens3: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.122.89  netmask 255.255.255.0  broadcast 192.168.122.255
+        inet6 fe80::5054:ff:fe12:3456  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:12:34:56  txqueuelen 1000  (Ethernet)
+        RX packets 11841  bytes 888169 (888.1 KB)
+        RX errors 0  dropped 571  overruns 0  frame 0
+        TX packets 11302  bytes 978301 (978.3 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 1321  bytes 90035 (90.0 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1321  bytes 90035 (90.0 KB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+david@openstack-vm-u9832:~$ ping 192.168.42.200
+PING 192.168.42.200 (192.168.42.200) 56(84) bytes of data.
+64 bytes from 192.168.42.200: icmp_seq=1 ttl=64 time=0.272 ms
+^C
+--- 192.168.42.200 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.272/0.272/0.272/0.000 ms
+david@openstack-vm-u9832:~$ ping 192.168.42.1
+PING 192.168.42.1 (192.168.42.1) 56(84) bytes of data.
+64 bytes from 192.168.42.1: icmp_seq=1 ttl=63 time=0.315 ms
+^C
+--- 192.168.42.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.315/0.315/0.315/0.000 ms
+
+david@openstack-vm-u9832:~$ ssh -fNL 19192:xxxx.proxy.com:9x1 huaqiang@192.168.42.1
+Could not create directory '/home/david/.ssh'.
+The authenticity of host '192.168.42.1 (192.168.42.1)' can't be established.
+ECDSA key fingerprint is SHA256:EEHiPOo4yMDsIBvM00dc06rLp3vEyJwtHMr3DoXsVO0.
+Are you sure you want to continue connecting (yes/no)? yes
+Failed to add the host to the list of known hosts (/home/david/.ssh/known_hosts).
+huaqiang@192.168.42.1's password:
+
+
+david@openstack-vm-u9832:~$ sudo apt-get update
+Get:1 http://security.ubuntu.com/ubuntu artful-security InRelease [83.2 kB]
+Hit:2 http://us.archive.ubuntu.com/ubuntu artful InRelease
+Get:3 http://security.ubuntu.com/ubuntu artful-security/main amd64 Packages [176 kB]
+Get:4 http://us.archive.ubuntu.com/ubuntu artful-updates InRelease [88.7 kB]
+Get:5 http://security.ubuntu.com/ubuntu artful-security/main i386 Packages [174 kB]
+Get:5 http://security.ubuntu.com/ubuntu artful-security/main i386 Packages [174 kB]
+Get:5 http://security.ubuntu.com/ubuntu artful-security/main i386 Packages [174 kB]
+Get:8 http://security.ubuntu.com/ubuntu artful-security/main Translation-en [80.1 kB]
+Get:9 http://us.archive.ubuntu.com/ubuntu artful-backports InRelease [74.6 kB]
+0% [9 InRelease 957 B/74.6 kB 1%] [8 Translation-en 4074 B/80.1 kB 5%]                                                                               49.5 kB/s 26s^C
+david@openstack-vm-u9832:~$ ps aux|grep ssh
+root      3190  0.0  0.2  72136  5708 ?        Ss   10:46   0:00 /usr/sbin/sshd -D
+root      4098  0.0  0.3 105604  7208 ?        Ss   11:03   0:00 sshd: david [priv]
+david     4159  0.1  0.2 105604  4608 ?        S    11:04   0:00 sshd: david@pts/0
+david     4225  0.0  0.1  46736  2880 ?        Ss   11:06   0:00 ssh -fNL 19192:proxy.xxxx.com:9x1 huaqiang@192.168.42.1
+david     4591  0.0  0.0  13040  1044 pts/0    S+   11:09   0:00 grep ssh
+david@openstack-vm-u9832:~$ cat /etc/apt/apt.conf.d/90proxy
+Acquire::https::Proxy "http://127.0.0.1:19192";
+Acquire::http::Proxy "http://127.0.0.1:19192";
+
+```
 
 ### Proxy Setting
 After above configuration, a NAT network should work at our desire, and the
