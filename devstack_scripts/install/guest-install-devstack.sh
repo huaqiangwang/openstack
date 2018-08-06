@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 function protocal_https_replace_git
 {
   git config --global url."https://".insteadOf git://
@@ -7,12 +9,8 @@ function protocal_https_replace_git
 
 function setup_openstack_github_source
 {
-  apt-get install git -y
-  useradd -s /bin/bash -d /opt/stack -m stack
-  echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
-  sudo su - stack
   protocal_https_replace_git
-  git clone https://git.openstack.org/cgit/openstack-dev/devstack
+  git clone http://git.trystack.cn/openstack-dev/devstack
   cd devstack
   if [ -f local.conf ]
   then
@@ -31,3 +29,5 @@ NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git
 SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git
 EOF
 }
+
+setup_openstack_github_source

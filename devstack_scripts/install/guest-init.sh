@@ -106,6 +106,7 @@ function setup_apt_proxy()
     echo "-- warnning: https proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
     echo "${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy: \"${origin_https_proxy}\""
   fi
+}
 
 
 function setup_apt
@@ -165,13 +166,6 @@ function protocal_https_replace_git
   git config --global http.proxy http://127.0.0.1:19192
 }
 
-function runin_user_stack()
-{
-  su - c ./guest-install-devstack.sh stack
-}
-
-
-
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root"
    exit 1
@@ -183,4 +177,6 @@ setup_proxy $proxyip $proxyport
 setup_apt_proxy $proxyip $proxyport
 setup_apt
 setup_pypi_source
-runin_user_stack
+apt-get install git -y
+useradd -s /bin/bash -d /opt/stack -m stack
+echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
