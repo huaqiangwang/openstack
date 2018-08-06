@@ -8,6 +8,9 @@
 # - pip mirror source
 # - openstack mirror source
 
+#
+# FAKE_OUTPUT=1 -> not affect realy configuration files
+# FAKE_OUTPUT=0 -> applying to system configuraion files
 FAKE_OUTPUT=1
 
 if [ $FAKE_OUTPUT -eq 1 ]
@@ -55,22 +58,23 @@ function setup_proxy()
   checkfile ${OUTPUT_PREFIX}${ENVFILE_NAME}
 
   # check if proxy already defined
-  origin_http_proxy=`grep "proxy_http[^s]" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
-  origin_https_proxy=`grep "proxy_https" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
+  origin_http_proxy=`grep "http_proxy" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
+  origin_https_proxy=`grep "https_proxy" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
   if [ "$origin_http_proxy" == "" ]
   then
-    echo "export proxy_http=$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
+    echo "export http_proxy=http://$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
   else
     echo "warnning: http proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
     echo "${OUTPUT_PREFIX}${ENVFILE_NAME}: \"${origin_http_proxy}\""
   fi
   if [ "$origin_https_proxy" == "" ]
   then
-    echo "export proxy_https=$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
+    echo "export https_proxy=http://$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
   else
     echo "--warnning: https proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
     echo "${OUTPUT_PREFIX}${ENVFILE_NAME}: \"${origin_https_proxy}\""
   fi
+
 }
 
 # parameter:
@@ -90,23 +94,23 @@ function setup_apt_proxy()
   origin_https_proxy=`grep "https::proxy" ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy`
   if [ "$origin_http_proxy" == "" ]
   then
-    echo "Acquire::http::proxy \"$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
+    echo "Acquire::http::proxy \"http://$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
   else
     echo "-- warnning: http proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
     echo "${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy: \"${origin_http_proxy}\""
   fi
   if [ "$origin_https_proxy" == "" ]
   then
-    echo "Acquire::https::proxy \"$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
+    echo "Acquire::https::proxy \"http://$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
   else
     echo "-- warnning: https proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
     echo "${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy: \"${origin_https_proxy}\""
   fi
-}
+
 
 function setup_apt
 {
-  TARGET="${OUTPUT_PREFIX}/etc/apt/sources.list"
+  TARGET="${OUTPUT_PREFIX}/etc/apt/ources.list"
 
   checkfile $TARGET
 
@@ -131,7 +135,7 @@ function setup_apt
   deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
 
 EOF
-  if [ $FAKE_OUTPUT == 1 ]
+  if [ $FAKE_OUTPUT == 0 ]
   then
     apt-get update -y
   fi
@@ -143,13 +147,11 @@ function setup_pypi_source
 
   checkfile $TARGET
 
-  if [ ! -f $TARGET ]
+  if [ -f $TARGET ]
   then
-    echo "$TARGET does not exist"
-    exit
+    mv $TARGET $TARGET-`date +%M`
   fi
 
-  mv $TARGET $TARGET-`date +%M`
   tee $TARGET >>/dev/null  <<EOF
 [global]
 index-url = https://pypi.tuna.tsinghua.edu.cn/simple
@@ -159,32 +161,17 @@ EOF
 function protocal_https_replace_git
 {
   git config --global url."https://".insteadOf git://
+  git config --global https.proxy http://127.0.0.1:19192
+  git config --global http.proxy http://127.0.0.1:19192
 }
 
-function setup_openstack_github_source
+function runin_user_stack()
 {
-  useradd -s /bin/bash -d /opt/stack -m stack
-  echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
-  sudo su - stack
-  git clone https://git.openstack.org/openstack-dev/devstack
-  cd devstack
-  if [ -f local.conf ]
-  then
-    mv local.conf local.conf-`date +%M`
-  fi
-
-  tee local.conf >>/dev/null <<EOF
-[[local|localrc]]
-DMIN_PASSWORD=secret
-ATABASE_PASSWORD=$ADMIN_PASSWORD
-ABBIT_PASSWORD=$ADMIN_PASSWORD
-ERVICE_PASSWORD=$ADMIN_PASSWORD
-# use TryStack git mirror
-GIT_BASE=http://git.trystack.cn
-NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git
-SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git
-EOF
+  su - c ./guest-install-devstack.sh stack
 }
+
+
+
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root"
    exit 1
@@ -196,5 +183,4 @@ setup_proxy $proxyip $proxyport
 setup_apt_proxy $proxyip $proxyport
 setup_apt
 setup_pypi_source
-protocal_https_replace_git
-setup_openstack_github_source
+runin_user_stack
