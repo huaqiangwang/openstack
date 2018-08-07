@@ -19,7 +19,7 @@ function setup_openstack_github_source
 
   tee local.conf >>/dev/null <<EOF
 [[local|localrc]]
-DMIN_PASSWORD=secret
+ADMIN_PASSWORD=secret
 ATABASE_PASSWORD=$ADMIN_PASSWORD
 ABBIT_PASSWORD=$ADMIN_PASSWORD
 ERVICE_PASSWORD=$ADMIN_PASSWORD
