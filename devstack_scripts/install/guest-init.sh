@@ -11,7 +11,7 @@
 #
 # FAKE_OUTPUT=1 -> not affect realy configuration files
 # FAKE_OUTPUT=0 -> applying to system configuraion files
-FAKE_OUTPUT=1
+FAKE_OUTPUT=0
 
 if [ $FAKE_OUTPUT -eq 1 ]
 then
@@ -111,7 +111,7 @@ function setup_apt_proxy()
 
 function setup_apt
 {
-  TARGET="${OUTPUT_PREFIX}/etc/apt/ources.list"
+  TARGET="${OUTPUT_PREFIX}/etc/apt/sources.list"
 
   checkfile $TARGET
 
@@ -139,6 +139,8 @@ EOF
   if [ $FAKE_OUTPUT == 0 ]
   then
     apt-get update -y
+    apt-get -y install openssh-server
+    apt-get -y install vim
   fi
 }
 
