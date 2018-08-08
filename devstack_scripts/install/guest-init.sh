@@ -8,7 +8,7 @@
 # - pip mirror source
 # - openstack mirror source
 
-#
+# Debug knob
 # FAKE_OUTPUT=1 -> not affect realy configuration files
 # FAKE_OUTPUT=0 -> applying to system configuraion files
 FAKE_OUTPUT=0
@@ -60,19 +60,31 @@ function setup_proxy()
   # check if proxy already defined
   origin_http_proxy=`grep "http_proxy" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
   origin_https_proxy=`grep "https_proxy" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
+  origin_no_proxy=`grep "no_proxy" ${OUTPUT_PREFIX}${ENVFILE_NAME}`
   if [ "$origin_http_proxy" == "" ]
   then
     echo "export http_proxy=http://$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
   else
-    echo "warnning: http proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
+    echo "warning: http proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
     echo "${OUTPUT_PREFIX}${ENVFILE_NAME}: \"${origin_http_proxy}\""
   fi
+
   if [ "$origin_https_proxy" == "" ]
   then
     echo "export https_proxy=http://$1:$2" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
   else
-    echo "--warnning: https proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
+    echo "--warning: https proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
     echo "${OUTPUT_PREFIX}${ENVFILE_NAME}: \"${origin_https_proxy}\""
+  fi
+
+  if [ "$origin_no_proxy" == "" ]
+  then
+    localip=$(hostname -I| awk 'END{for(i=1;i<NF+1;i++){printf "%s,", $i};}')
+    localip+="127.0.0.1,localhost"
+    echo "export no_proxy=$localip" >> ${OUTPUT_PREFIX}${ENVFILE_NAME}
+  else
+    echo "--warning: no_proxy already exists in ${OUTPUT_PREFIX}${ENVFILE_NAME}"
+    echo "${OUTPUT_PREFIX}${ENVFILE_NAME}: \"${origin_no_proxy}\""
   fi
 
 }
@@ -96,14 +108,14 @@ function setup_apt_proxy()
   then
     echo "Acquire::http::proxy \"http://$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
   else
-    echo "-- warnning: http proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
+    echo "-- warning: http proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
     echo "${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy: \"${origin_http_proxy}\""
   fi
   if [ "$origin_https_proxy" == "" ]
   then
     echo "Acquire::https::proxy \"http://$1:$2/\";" >> ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy
   else
-    echo "-- warnning: https proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
+    echo "-- warning: https proxy already exists in ${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy"
     echo "${OUTPUT_PREFIX}/etc/apt/apt.conf.d/50proxy: \"${origin_https_proxy}\""
   fi
 }
@@ -157,7 +169,9 @@ function setup_pypi_source
 
   tee $TARGET >>/dev/null  <<EOF
 [global]
+timeout = 30
 index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+extra-index-url = https://mirrors.ustc.edu.cn/pypi/web/simple
 EOF
 }
 
