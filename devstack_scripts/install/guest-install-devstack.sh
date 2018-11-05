@@ -8,7 +8,7 @@ function protocal_https_replace_git
 function setup_openstack_github_source
 {
   protocal_https_replace_git
-  git clone http://git.trystack.cn/openstack-dev/devstack
+  git clone http://git.trystack.cn/openstack-dev/devstack stable/pike
   cd devstack
   if [ -f local.conf ]
   then
@@ -17,9 +17,12 @@ function setup_openstack_github_source
 
   tee local.conf >>/dev/null <<EOF
 [[local|localrc]]
-ATABASE_PASSWORD=secure
-ABBIT_PASSWORD=secure
-ERVICE_PASSWORD=secure
+HOST_IP=127.0.0.1
+SERVICE_HOST=127.0.0.1
+ADMIN_PASSWORD=secure
+DATABASE_PASSWORD=secure
+RABBIT_PASSWORD=secure
+SERVICE_PASSWORD=secure
 # use TryStack git mirror
 GIT_BASE=http://git.trystack.cn
 NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git
