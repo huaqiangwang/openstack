@@ -8,7 +8,7 @@ function protocal_https_replace_git
 function setup_openstack_github_source
 {
   protocal_https_replace_git
-  git clone http://git.trystack.cn/openstack-dev/devstack stable/pike
+  git clone http://git.trystack.cn/openstack-dev/devstack -b stable/rocky
   cd devstack
   if [ -f local.conf ]
   then

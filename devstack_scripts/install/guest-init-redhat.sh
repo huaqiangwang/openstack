@@ -187,12 +187,11 @@ fi
 
 proxyip="127.0.0.1"
 proxyport="19192"
-setup_proxy $proxyip $proxyport
-setup_apt_proxy $proxyip $proxyport
-setup_apt
+#setup_proxy $proxyip $proxyport
+#setup_apt_proxy $proxyip $proxyport
+#setup_apt
 # Using origial pip sources to avoid unkown errors
 #setup_pypi_source
-apt-get install git -y
+#apt-get install git -y
 useradd -s /bin/bash -d /opt/stack -m stack
 echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
-
